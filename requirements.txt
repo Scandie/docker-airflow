@@ -1,0 +1,15 @@
+apache-airflow==1.10.1
+couchdb==1.0
+dpath==1.4.2
+isodate==0.6.0
+validx==0.2
+redis==3.0.1
+LazyDB==0.1.80
+psycopg2==2.7.6.1
+pyyaml
+ZODB
+ZEO
+retrying
+
+git+https://github.com/openprocurement/openprocurement.client.python.git@registry#egg=openprocurement_client 
+
