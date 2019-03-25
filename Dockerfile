@@ -44,6 +44,7 @@ RUN set -ex \
         default-libmysqlclient-dev \
         apt-utils \
         curl \
+        git \
         rsync \
         netcat \
         locales \
@@ -58,7 +59,7 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis>=2.10.5,<3' \
-    && pip install -r requirements.txt \
+    && pip install git+https://github.com/openprocurement/openprocurement.client.python.git@registry#egg=openprocurement_client \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -72,7 +73,6 @@ RUN set -ex \
         /usr/share/doc-base
 
 COPY script/entrypoint.sh /entrypoint.sh
-COPY configs/airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
