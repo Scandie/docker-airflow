@@ -10,7 +10,7 @@ services:
 
     webserver:
         network_mode: "host"
-        image: concierge_airflow
+        image: scandie/airflow:latest
         restart: always
         depends_on:
             - postgres

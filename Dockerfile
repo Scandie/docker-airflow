@@ -26,7 +26,6 @@ ENV LC_ALL en_US.UTF-8
 ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
 
-COPY requirements.txt /requirements.txt
 
 RUN set -ex \
     && buildDeps=' \
@@ -36,12 +35,12 @@ RUN set -ex \
         libssl-dev \
         libffi-dev \
         libpq-dev \
-        git \
     ' \
     && apt-get update -yqq \
     && apt-get upgrade -yqq \
     && apt-get install -yqq --no-install-recommends \
         $buildDeps \
+        git \
         freetds-bin \
         build-essential \
         default-libmysqlclient-dev \
@@ -61,7 +60,6 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis>=2.10.5,<3' \
-    && pip install -r requirements.txt \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -76,6 +74,10 @@ RUN set -ex \
 
 
 COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+COPY entrypoint.sh /entrypoint.sh
+
+COPY scripts  ${AIRFLOW_HOME}/scripts
+COPY configs  ${AIRFLOW_HOME}/configs
 
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
@@ -84,5 +86,5 @@ EXPOSE 8080 5555 8793
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
-ENTRYPOINT ["scripts/entrypoint.sh"]
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["webserver"] # set default arg for entrypoint
