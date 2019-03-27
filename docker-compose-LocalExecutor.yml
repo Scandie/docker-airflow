@@ -1,6 +1,7 @@
 version: '2.1'
 services:
     postgres:
+        network_mode: "host"
         image: postgres:9.6
         environment:
             - POSTGRES_USER=airflow
@@ -8,10 +9,13 @@ services:
             - POSTGRES_DB=airflow
 
     webserver:
-        image: puckel/docker-airflow:1.10.2
+        network_mode: "host"
+        image: concierge_airflow
         restart: always
         depends_on:
             - postgres
+            - zeoserver
+            - redis
         environment:
             - LOAD_EX=n
             - EXECUTOR=Local
@@ -19,6 +23,7 @@ services:
             - ./dags:/usr/local/airflow/dags
             - ./plugins:/usr/local/airflow/plugins
             - ./configs:/usr/local/airflow/configs
+            - ./scripts:/usr/local/airflow/scripts
         ports:
             - "8080:8080"
         command: webserver
@@ -27,3 +32,15 @@ services:
             interval: 30s
             timeout: 30s
             retries: 3
+
+    redis:
+        network_mode: "host"
+        image: redis:4.0.5-alpine
+        command: ["redis-server", "--appendonly", "yes"]
+        hostname: redis
+
+    zeoserver:
+        network_mode: "host"
+        volumes:
+          - ./etc/zeo.conf:/plone/zeoserver/parts/zeoserver/etc/zeo.conf
+        image: scandie/zeoserver:latest

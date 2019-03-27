@@ -17,6 +17,7 @@ ARG AIRFLOW_HOME=/usr/local/airflow
 ARG AIRFLOW_DEPS=""
 ARG PYTHON_DEPS=""
 ENV AIRFLOW_GPL_UNIDECODE yes
+ENV PYTHONPATH $PYTHONPATH:$AIRFLOW_HOME
 
 # Define en_US.
 ENV LANGUAGE en_US.UTF-8
@@ -24,6 +25,8 @@ ENV LANG en_US.UTF-8
 ENV LC_ALL en_US.UTF-8
 ENV LC_CTYPE en_US.UTF-8
 ENV LC_MESSAGES en_US.UTF-8
+
+COPY requirements.txt /requirements.txt
 
 RUN set -ex \
     && buildDeps=' \
@@ -44,7 +47,6 @@ RUN set -ex \
         default-libmysqlclient-dev \
         apt-utils \
         curl \
-        git \
         rsync \
         netcat \
         locales \
@@ -59,7 +61,7 @@ RUN set -ex \
     && pip install pyasn1 \
     && pip install apache-airflow[crypto,celery,postgres,hive,jdbc,mysql,ssh${AIRFLOW_DEPS:+,}${AIRFLOW_DEPS}]==${AIRFLOW_VERSION} \
     && pip install 'redis>=2.10.5,<3' \
-    && pip install git+https://github.com/openprocurement/openprocurement.client.python.git@registry#egg=openprocurement_client \
+    && pip install -r requirements.txt \
     && if [ -n "${PYTHON_DEPS}" ]; then pip install ${PYTHON_DEPS}; fi \
     && apt-get purge --auto-remove -yqq $buildDeps \
     && apt-get autoremove -yqq --purge \
@@ -72,7 +74,9 @@ RUN set -ex \
         /usr/share/doc \
         /usr/share/doc-base
 
-COPY script/entrypoint.sh /entrypoint.sh
+
+COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
+
 
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
@@ -80,5 +84,5 @@ EXPOSE 8080 5555 8793
 
 USER airflow
 WORKDIR ${AIRFLOW_HOME}
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["scripts/entrypoint.sh"]
 CMD ["webserver"] # set default arg for entrypoint
