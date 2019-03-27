@@ -8,5 +8,6 @@ pyyaml
 ZODB
 ZEO
 retrying
+flask_bcrypt
 
 git+https://github.com/openprocurement/openprocurement.client.python.git@registry#egg=openprocurement_client

@@ -6,6 +6,10 @@ TRY_LOOP="20"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
+: "${AIRFLOW_USERNAME:="username"}"
+: "${AIRFLOW_PASSWORD:="password"}"
+: "${AIRFLOW_EMAIL:="username@mail.com"}"
+
 : "${POSTGRES_HOST:="postgres"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
@@ -23,12 +27,19 @@ export \
   AIRFLOW__CORE__FERNET_KEY \
   AIRFLOW__CORE__LOAD_EXAMPLES \
   AIRFLOW__CORE__SQL_ALCHEMY_CONN \
+  AIRFLOW__WEBSERVER__AUTHENTICATE \
 
 
 # Load DAGs exemples (default: Yes)
 if [[ -z "$AIRFLOW__CORE__LOAD_EXAMPLES" && "${LOAD_EX:=n}" == n ]]
 then
   AIRFLOW__CORE__LOAD_EXAMPLES=False
+fi
+
+# Using airflow auth (default: No)
+if [[ -z "$AIRFLOW__WEBSERVER__AUTHENTICATE" && "${AUTH:=y}" == y ]]
+then
+  AIRFLOW__WEBSERVER__AUTHENTICATE=True
 fi
 
 # Install custom python package if requirements.txt is present
@@ -70,6 +81,16 @@ fi
 case "$1" in
   webserver)
     airflow initdb
+
+    # Using airflow auth (default: No)
+    if [[ "$AIRFLOW__WEBSERVER__AUTHENTICATE" == True ]]
+    then
+      python scripts/create_user.py \
+      -u ${AIRFLOW_USERNAME} \
+      -p  ${AIRFLOW_PASSWORD} \
+      -e ${AIRFLOW_EMAIL}
+    fi
+
     if [ "$AIRFLOW__CORE__EXECUTOR" = "LocalExecutor" ]; then
       # With the "Local" executor it should all run in one container.
       airflow scheduler &
