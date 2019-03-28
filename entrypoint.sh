@@ -6,19 +6,31 @@ TRY_LOOP="20"
 : "${REDIS_PORT:="6379"}"
 : "${REDIS_PASSWORD:=""}"
 
-: "${AIRFLOW_USERNAME:="username"}"
-: "${AIRFLOW_PASSWORD:="password"}"
-: "${AIRFLOW_EMAIL:="username@mail.com"}"
-
 : "${POSTGRES_HOST:="postgres"}"
 : "${POSTGRES_PORT:="5432"}"
 : "${POSTGRES_USER:="airflow"}"
 : "${POSTGRES_PASSWORD:="airflow"}"
 : "${POSTGRES_DB:="airflow"}"
 
+# Default variables values for Airflow user
+: "${AIRFLOW_USERNAME:="username"}"
+: "${AIRFLOW_PASSWORD:="password"}"
+: "${AIRFLOW_EMAIL:="username@mail.com"}"
+
+# Max count of concurrent task per single worker
+: "${MAX_ACTIVE_TASKS_PER_WORKER:="16"}"
+# Max count of concurrent task per single dag
+: "${MAX_ACTIVE_RUNS_PER_DAG:="4"}"
+# Max count of concurrent task per single dag
+: "${MAX_THREADS:="2"}"
+
+
 # Defaults and back-compat
 : "${AIRFLOW__CORE__FERNET_KEY:=${FERNET_KEY:=$(python -c "from cryptography.fernet import Fernet; FERNET_KEY = Fernet.generate_key().decode(); print(FERNET_KEY)")}}"
 : "${AIRFLOW__CORE__EXECUTOR:=${EXECUTOR:-Sequential}Executor}"
+
+# Variable for custom logging config that located in $PYTHONPATH, not used if null
+: "${AIRFLOW__CORE__LOGGING_CONFIG_CLASS:="${LOG_CONF:=""}"}"
 
 export \
   AIRFLOW__CELERY__BROKER_URL \
@@ -27,17 +39,33 @@ export \
   AIRFLOW__CORE__FERNET_KEY \
   AIRFLOW__CORE__LOAD_EXAMPLES \
   AIRFLOW__CORE__SQL_ALCHEMY_CONN \
+  AIRFLOW__CORE__LOGGING_CONFIG_CLASS \
   AIRFLOW__WEBSERVER__AUTHENTICATE \
+  AIRFLOW__CORE__DAG_CONCURRENCY \
+  AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG \
+  AIRFLOW__SCHEDULER__MAX_THREADS \
 
 
-# Load DAGs exemples (default: Yes)
+if [[ -z "$AIRFLOW__CORE__DAG_CONCURRENCY" && -n "$MAX_ACTIVE_TASKS_PER_WORKER" ]]; then
+    AIRFLOW__CORE__DAG_CONCURRENCY=:${MAX_ACTIVE_TASKS_PER_WORKER}
+fi
+
+if [[ -z "$AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG" && -n "$MAX_ACTIVE_RUNS_PER_DAG" ]]; then
+    AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG=:${$MAX_ACTIVE_RUNS_PER_DAG}
+fi
+
+if [[ -z "$AIRFLOW__SCHEDULER__MAX_THREADS" && -n "$MAX_THREADS" ]]; then
+    AIRFLOW__SCHEDULER__MAX_THREADS=:${MAX_THREADS}
+fi
+
+# Load DAGs examples (default: Yes)
 if [[ -z "$AIRFLOW__CORE__LOAD_EXAMPLES" && "${LOAD_EX:=n}" == n ]]
 then
   AIRFLOW__CORE__LOAD_EXAMPLES=False
 fi
 
 # Using airflow auth (default: No)
-if [[ -z "$AIRFLOW__WEBSERVER__AUTHENTICATE" && "${AUTH:=y}" == y ]]
+if [[ -z "$AIRFLOW__WEBSERVER__AUTHENTICATE" && "${AUTH:=n}" == y ]]
 then
   AIRFLOW__WEBSERVER__AUTHENTICATE=True
 fi

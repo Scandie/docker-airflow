@@ -76,10 +76,6 @@ RUN set -ex \
 COPY airflow.cfg ${AIRFLOW_HOME}/airflow.cfg
 COPY entrypoint.sh /entrypoint.sh
 
-COPY scripts  ${AIRFLOW_HOME}/scripts
-COPY configs  ${AIRFLOW_HOME}/configs
-
-
 RUN chown -R airflow: ${AIRFLOW_HOME}
 
 EXPOSE 8080 5555 8793
