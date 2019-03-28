@@ -1,6 +1,8 @@
 version: '2.1'
 services:
     postgres:
+        volumes:
+            - pgdata:/var/lib/postgresql/data
         image: postgres:9.6
         environment:
             - POSTGRES_USER=airflow
@@ -41,3 +43,5 @@ services:
         volumes:
           - ./etc/zeo.conf:/plone/zeoserver/parts/zeoserver/etc/zeo.conf
         image: scandie/zeoserver:latest
+volumes:
+  pgdata:

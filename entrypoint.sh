@@ -21,7 +21,7 @@ TRY_LOOP="20"
 : "${MAX_ACTIVE_TASKS_PER_WORKER:="16"}"
 # Max count of concurrent task per single dag
 : "${MAX_ACTIVE_RUNS_PER_DAG:="4"}"
-# Max count of concurrent task per single dag
+# Max count of parallel threads to schedule dags
 : "${MAX_THREADS:="2"}"
 
 
@@ -47,15 +47,15 @@ export \
 
 
 if [[ -z "$AIRFLOW__CORE__DAG_CONCURRENCY" && -n "$MAX_ACTIVE_TASKS_PER_WORKER" ]]; then
-    AIRFLOW__CORE__DAG_CONCURRENCY=:${MAX_ACTIVE_TASKS_PER_WORKER}
+    AIRFLOW__CORE__DAG_CONCURRENCY=${MAX_ACTIVE_TASKS_PER_WORKER}
 fi
 
 if [[ -z "$AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG" && -n "$MAX_ACTIVE_RUNS_PER_DAG" ]]; then
-    AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG=:${$MAX_ACTIVE_RUNS_PER_DAG}
+    AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG=${MAX_ACTIVE_RUNS_PER_DAG}
 fi
 
 if [[ -z "$AIRFLOW__SCHEDULER__MAX_THREADS" && -n "$MAX_THREADS" ]]; then
-    AIRFLOW__SCHEDULER__MAX_THREADS=:${MAX_THREADS}
+    AIRFLOW__SCHEDULER__MAX_THREADS=${MAX_THREADS}
 fi
 
 # Load DAGs examples (default: Yes)
@@ -136,6 +136,9 @@ case "$1" in
     ;;
   version)
     exec airflow "$@"
+    ;;
+  resetdb)
+    exec airflow "$@" -y
     ;;
   *)
     # The command is something like bash, not an airflow subcommand. Just run it in the right environment.
